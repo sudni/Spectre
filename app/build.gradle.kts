@@ -35,10 +35,26 @@ android {
     vectorDrawables.useSupportLibrary = true
   }
 
+  signingConfigs {
+    create("debug") {
+      storeFile = file("debug.keystore")
+      storePassword = "android"
+      keyAlias = "androiddebugkey"
+      keyPassword = "android"
+    }
+    create("release") {
+      storeFile = file("release.keystore")
+      storePassword = "android"
+      keyAlias = "androiddebugkey"
+      keyPassword = "android"
+    }
+  }
+
   buildTypes {
     debug {
       applicationIdSuffix = ".debug"
       versionNameSuffix = debugVersionSuffix
+      signingConfig = signingConfigs.getByName("debug")
     }
     release {
       isMinifyEnabled = true
@@ -47,6 +63,7 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
       )
+      signingConfig = signingConfigs.getByName("release")
     }
   }
   compileOptions {
