@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
+import android.os.Build
 import androidx.core.content.ContextCompat
 import dev.thomasbuilds.spectre.analysis.Distance
 import dev.thomasbuilds.spectre.model.DetailEntry
@@ -269,7 +270,7 @@ class WifiScanner(
     val generation = scanGeneration.incrementAndGet()
 
     results.forEach { sr ->
-      val key = (sr.BSSID ?: "").ifEmpty { sr.wifiSsid?.toString().orEmpty() }
+      val key = (sr.BSSID ?: "").ifEmpty { getWifiSsidCompat(sr).orEmpty() }
       if (key.isEmpty()) return@forEach
 
       val sanitized = sanitizeRssi(sr.level)
@@ -323,6 +324,15 @@ class WifiScanner(
     return bssid
   }
 
+  private fun getWifiSsidCompat(sr: ScanResult): String? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      @Suppress("NewApi")
+      sr.wifiSsid?.toString()
+    } else {
+      @Suppress("DEPRECATION")
+      sr.ssid
+    }
+
   private fun mapScanResult(
     sr: ScanResult,
     smoothedRssi: Double,
@@ -334,8 +344,7 @@ class WifiScanner(
     val freq = sr.frequency
     val band = WifiChannels.bandFor(freq)
     val rawSsid =
-      sr.wifiSsid
-        ?.toString()
+      getWifiSsidCompat(sr)
         ?.trim('"')
         .orEmpty()
     val ssid = if (rawSsid.isBlank()) "Hidden" else rawSsid
