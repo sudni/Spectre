@@ -316,8 +316,8 @@ class GattInspector(
     characteristic: BluetoothGattCharacteristic,
     value: ByteArray,
     writeType: Int
-  ): Int {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+  ): Int =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       // API 33+: Use the new method
       @Suppress("NewApi")
       gatt.writeCharacteristic(characteristic, value, writeType)
@@ -331,7 +331,6 @@ class GattInspector(
       val result = gatt.writeCharacteristic(characteristic)
       if (result) BluetoothStatusCodes.SUCCESS else BluetoothStatusCodes.ERROR_UNKNOWN
     }
-  }
 
   private inner class Session(
     val mac: String,
