@@ -329,9 +329,8 @@ class WifiScanner(
       @Suppress("NewApi")
       sr.wifiSsid?.toString()
     } else {
-      // For API 31-32, try to get SSID via reflection as it's not directly accessible
+      // For API 31-32, use reflection to call getWifiSsid()
       runCatching {
-        @Suppress("UNCHECKED_CAST")
         val method = ScanResult::class.java.getMethod("getWifiSsid")
         val wifiSsid = method.invoke(sr)
         wifiSsid?.toString()
