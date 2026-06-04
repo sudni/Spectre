@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.Immutable
@@ -290,7 +291,7 @@ class GattInspector(
       }
     pendingWrite = onResult
     val code =
-      runCatching { g.writeCharacteristic(characteristic, value, writeType) }
+      runCatching { writeCharacteristicCompat(g, characteristic, value, writeType) }
         .getOrElse {
           pendingWrite = null
           onResult(false, "Write threw: ${it.message}")
@@ -307,6 +308,29 @@ class GattInspector(
         onResult(false, "Write timed out (no confirmation)")
       }
     }, WRITE_TIMEOUT_MS)
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun writeCharacteristicCompat(
+    gatt: BluetoothGatt,
+    characteristic: BluetoothGattCharacteristic,
+    value: ByteArray,
+    writeType: Int
+  ): Int {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // API 33+: Use the new method
+      @Suppress("NewApi")
+      gatt.writeCharacteristic(characteristic, value, writeType)
+    } else {
+      // API 31-32: Use the deprecated method
+      @Suppress("DEPRECATION")
+      characteristic.value = value
+      @Suppress("DEPRECATION")
+      characteristic.writeType = writeType
+      @Suppress("DEPRECATION")
+      val result = gatt.writeCharacteristic(characteristic)
+      if (result) BluetoothStatusCodes.SUCCESS else BluetoothStatusCodes.ERROR_UNKNOWN
+    }
   }
 
   private inner class Session(
